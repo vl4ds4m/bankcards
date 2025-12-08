@@ -1,0 +1,305 @@
+openapi: 3.0.4
+info:
+  title: Система управления банковскими картами
+  description: Спецификация API системы управления банковскими картами
+  version: 1.0.0
+components:
+  schemas:
+    EntityId:
+      type: integer
+      format: int64
+      example: 123456
+    UserName:
+      type: string
+      example: Иван Петров
+    CardBalance:
+      type: object
+      properties:
+        amount:
+          type: integer
+          format: int64
+          example: 15000
+      required:
+        - amount
+  parameters:
+    CardId:
+      name: id
+      description: Идентификатор карты
+      required: true
+      in: path
+      schema:
+        $ref: '#/components/schemas/EntityId'
+  responses:
+    InvalidRequest:
+      description: Недопустимый запрос с сообщением о причине проблемы
+      content:
+        application/json:
+          schema:
+            title: InvalidRequestMessage
+            type: object
+            properties:
+              cause:
+                type: string
+                example: Свойство 'abc' должно быть положительным числом.
+            required:
+              - cause
+paths:
+  /users:
+    get:
+      operationId: getUsers
+      tags:
+        - users
+      description: Получить список всех пользователей
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  title: UserInfo
+                  type: object
+                  properties:
+                    id:
+                      $ref: '#/components/schemas/EntityId'
+                    name:
+                      $ref: '#/components/schemas/UserName'
+                  required:
+                    - id
+                    - name
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+    post:
+      operationId: createUser
+      tags:
+        - users
+      description: Создать пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              title: CreateUserRequest
+              type: object
+              properties:
+                name:
+                  $ref: '#/components/schemas/UserName'
+              required:
+                - name
+      responses:
+        '200':
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                title: CreateUserResponse
+                type: object
+                properties:
+                  id:
+                    $ref: '#/components/schemas/EntityId'
+                required:
+                  - id
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+  /cards:
+    get:
+      operationId: getCards
+      tags:
+        - cards
+      description: Получить список всех карт пользователя
+      parameters:
+        - name: userId
+          description: Идентификатор пользователя
+          required: true
+          in: query
+          schema:
+            $ref: '#/components/schemas/EntityId'
+        - name: page
+          description: Номер страницы списка карт
+          required: false
+          in: query
+          schema:
+            type: integer
+            example: 3
+      responses:
+        '200':
+          description: Список карт пользователя
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  title: CardInfo
+                  type: object
+                  properties:
+                    id:
+                      $ref: '#/components/schemas/EntityId'
+                    number:
+                      type: string
+                      example: "**** **** **** 1234"
+                    expiration:
+                      type: string
+                      format: date
+                      example: 2030-06
+                    status:
+                      type: string
+                      enum:
+                        - ACTIVE
+                        - EXPIRED
+                        - BLOCKED
+                  required:
+                    - id
+                    - number
+                    - expiration
+                    - status
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+    post:
+      operationId: createCard
+      tags:
+        - cards
+      description: Создать карту
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              title: CreateCardRequest
+              type: object
+              properties:
+                userId:
+                  $ref: '#/components/schemas/EntityId'
+              required:
+                - userId
+      responses:
+        '200':
+          description: Карта создана
+          content:
+            application/json:
+              schema:
+                title: CreateCardResponse
+                type: object
+                properties:
+                  id:
+                    $ref: '#/components/schemas/EntityId'
+                required:
+                  - id
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+  /cards/{id}:
+    delete:
+      operationId: deleteCard
+      tags:
+        - cards
+      description: Удалить карту
+      parameters:
+        - $ref: '#/components/parameters/CardId'
+      responses:
+        '200':
+          description: Карта удалена
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+  /cards/{id}/balance:
+    get:
+      operationId: getCardBalance
+      tags:
+        - cards
+      description: Получить баланс карты
+      parameters:
+        - $ref: '#/components/parameters/CardId'
+      responses:
+        '200':
+          description: Баланс карты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardBalance'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+    put:
+      operationId: changeCardBalance
+      tags:
+        - cards
+      description: Изменить баланс карты
+      parameters:
+        - $ref: '#/components/parameters/CardId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              title: ChangeBalanceRequest
+              type: object
+              properties:
+                addend:
+                  type: integer
+                  example: 1250
+              required:
+                - addend
+      responses:
+        '200':
+          description: Баланс карты после изменения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardBalance'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+  /cards/{id}/block:
+    put:
+      operationId: blockCard
+      tags:
+        - cards
+      description: Заблокировать карту
+      parameters:
+        - $ref: '#/components/parameters/CardId'
+      responses:
+        '200':
+          description: Карта заблокирована
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+  /cards/{id}/unblock:
+    put:
+      operationId: unblockCard
+      tags:
+        - cards
+      description: Разблокировать карту
+      parameters:
+        - $ref: '#/components/parameters/CardId'
+      responses:
+        '200':
+          description: Карта разблокирована
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+  /transfer:
+    put:
+      operationId: transfer
+      tags:
+        - transfer
+      description: Перевести деньги с одной карты на другую
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              title: TransferRequest
+              type: object
+              properties:
+                senderCardId:
+                  $ref: '#/components/schemas/EntityId'
+                receiverCardId:
+                  $ref: '#/components/schemas/EntityId'
+                amount:
+                  type: integer
+                  format: int64
+                  example: 1250
+              required:
+                - senderCardId
+                - receiverCardId
+                - amount
+      responses:
+        '200':
+          description: Перевод выполнен
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
