@@ -14,7 +14,18 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: name
+                  name: login
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: varchar(250)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
                   type: varchar(50)
                   constraints:
                     nullable: false
@@ -57,3 +68,15 @@ databaseChangeLog:
                   type: boolean
                   constraints:
                     nullable: false
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: login
+                  value: admin
+              - column:
+                  name: password
+                  value: "$2a$10$Njjyii6XoevmS9vyUwSWz.gBhPcG9i5HOelmYur2GGSmOyZsZB5Iy"
+              - column:
+                  name: role
+                  value: ADMIN

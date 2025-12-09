@@ -1,15 +1,17 @@
 package com.example.bankcards.controller;
 
+import com.example.bankcards.exception.AuthorizationException;
 import com.example.bankcards.openapi.api.CardsApi;
 import com.example.bankcards.openapi.model.*;
+import com.example.bankcards.security.CurrentUserProvider;
 import com.example.bankcards.service.CardService;
 import com.example.bankcards.util.CardUtils;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,9 +19,18 @@ public class CardController implements CardsApi {
 
     private final CardService cardService;
 
+    private final CurrentUserProvider currentUserProvider;
+
     @Override
-    public ResponseEntity<List<CardInfo>> getCards(Long userId, Optional<Integer> page) {
-        List<CardInfo> body = cardService.getCards(userId, page.orElse(0))
+    public ResponseEntity<List<CardInfo>> getCards(@Nullable Long userId, @Nullable Integer page) {
+        userId = userId == null ? currentUserProvider.id() : userId;
+        page = page == null ? 0 : page;
+
+        if (!currentUserProvider.admin() && currentUserProvider.id() != userId) {
+            throw new AuthorizationException("Пользователь не имеет доступа к сторонним картам.");
+        }
+
+        List<CardInfo> body = cardService.getCards(userId, page)
                 .stream()
                 .map(c -> new CardInfo(
                         c.getId(),
@@ -32,9 +43,13 @@ public class CardController implements CardsApi {
 
     @Override
     public ResponseEntity<CreateCardResponse> createCard(CreateCardRequest createCardRequest) {
-        long cardId = cardService.createCard(createCardRequest.getUserId());
-        var body = new CreateCardResponse(cardId);
-        return ResponseEntity.ok(body);
+        long userId = createCardRequest.getUserId();
+        if (currentUserProvider.id() == userId) {
+            throw new AuthorizationException("Карту можно создать только для обычного пользователя.");
+        }
+
+        long cardId = cardService.createCard(userId);
+        return ResponseEntity.ok(new CreateCardResponse(cardId));
     }
 
     @Override
@@ -45,7 +60,7 @@ public class CardController implements CardsApi {
 
     @Override
     public ResponseEntity<CardBalance> getCardBalance(Long id) {
-        long balance = cardService.getCardBalance(id);
+        long balance = cardService.getCardBalance(currentUserProvider.id(), id);
         return ResponseEntity.ok(new CardBalance(balance));
     }
 

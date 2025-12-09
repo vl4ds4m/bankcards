@@ -2,6 +2,7 @@ package com.example.bankcards;
 
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.openapi.model.UserRole;
 import com.example.bankcards.util.CardUtils;
 
 public class CardTestUtils {
@@ -14,7 +15,8 @@ public class CardTestUtils {
         var card = new Card();
         card.setId(123L);
         card.setNumber(3726_4923_8434_6345L);
-        card.setUser(new User("Abcdef"));
+        card.setUser(new User("Abcdef", "sup3r_s3cr31", UserRole.USER));
+        card.getUser().setId(75L);
         card.setExpiration(CardUtils.getExpiration());
         card.setBlocked(false);
         card.setBalance(12450L);

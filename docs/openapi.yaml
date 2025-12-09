@@ -9,9 +9,17 @@ components:
       type: integer
       format: int64
       example: 123456
-    UserName:
+    UserLogin:
       type: string
-      example: Иван Петров
+      example: ivan_petrov
+    UserRole:
+      type: string
+      enum:
+        - USER
+        - ADMIN
+    Password:
+      type: string
+      example: "o9df_sfl+Lkj#s8"
     CardBalance:
       type: object
       properties:
@@ -63,11 +71,14 @@ paths:
                   properties:
                     id:
                       $ref: '#/components/schemas/EntityId'
-                    name:
-                      $ref: '#/components/schemas/UserName'
+                    login:
+                      $ref: '#/components/schemas/UserLogin'
+                    role:
+                      $ref: '#/components/schemas/UserRole'
                   required:
                     - id
-                    - name
+                    - login
+                    - role
         '400':
           $ref: '#/components/responses/InvalidRequest'
     post:
@@ -83,10 +94,16 @@ paths:
               title: CreateUserRequest
               type: object
               properties:
-                name:
-                  $ref: '#/components/schemas/UserName'
+                login:
+                  $ref: '#/components/schemas/UserLogin'
+                role:
+                  $ref: '#/components/schemas/UserRole'
+                password:
+                  $ref: '#/components/schemas/Password'
               required:
-                - name
+                - login
+                - role
+                - password
       responses:
         '200':
           description: Пользователь создан
@@ -102,6 +119,43 @@ paths:
                   - id
         '400':
           $ref: '#/components/responses/InvalidRequest'
+  /auth:
+    post:
+      operationId: auth
+      tags:
+        - auth
+      description: Аутентификация пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              title: AuthRequest
+              type: object
+              properties:
+                login:
+                  $ref: '#/components/schemas/UserLogin'
+                password:
+                  $ref: '#/components/schemas/Password'
+              required:
+                - login
+                - password
+      responses:
+        '200':
+          description: JWT пользователя для выполнения запросов
+          content:
+            application/json:
+              schema:
+                title: AuthResponse
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30"
+                required:
+                  - token
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
   /cards:
     get:
       operationId: getCards
@@ -111,7 +165,7 @@ paths:
       parameters:
         - name: userId
           description: Идентификатор пользователя
-          required: true
+          required: false
           in: query
           schema:
             $ref: '#/components/schemas/EntityId'

@@ -19,7 +19,7 @@ public class UserController implements UsersApi {
 
     @Override
     public ResponseEntity<CreateUserResponse> createUser(CreateUserRequest createUserRequest) {
-        long userId = userService.createUser(createUserRequest.getName());
+        long userId = userService.createUser(createUserRequest);
         return ResponseEntity.ok(new CreateUserResponse(userId));
     }
 
@@ -27,7 +27,7 @@ public class UserController implements UsersApi {
     public ResponseEntity<List<UserInfo>> getUsers() {
         List<UserInfo> body = userService.getUsers()
                 .stream()
-                .map(u -> new UserInfo(u.getId(), u.getName()))
+                .map(u -> new UserInfo(u.getId(), u.getLogin(), u.getRole()))
                 .toList();
         return ResponseEntity.ok(body);
     }

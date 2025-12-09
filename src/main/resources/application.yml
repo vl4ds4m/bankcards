@@ -17,3 +17,5 @@ spring:
   jpa.hibernate.ddl-auto: validate
 
 server.port: 8888
+
+jwt.signing-key: ${JWT_SIGNING_KEY}

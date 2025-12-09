@@ -1,10 +1,12 @@
 package com.example.bankcards.controller;
 
 import com.example.bankcards.CardTestUtils;
+import com.example.bankcards.security.CurrentUserProvider;
 import com.example.bankcards.service.CardService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,7 +22,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CardController.class)
+@WebMvcTest
+@Import(CardController.class)
 class CardControllerTest {
 
     @Autowired
@@ -29,10 +32,14 @@ class CardControllerTest {
     @MockitoBean
     private CardService cardService;
 
+    @MockitoBean
+    private CurrentUserProvider currentUserProvider;
+
     @Test
     void testCreateCard() throws Exception {
         // Arrange
         when(cardService.createCard(2623L)).thenReturn(89345L);
+        when(currentUserProvider.id()).thenReturn(94L);
 
         // Act
         ResultActions actions = mockMvc.perform(
@@ -53,6 +60,8 @@ class CardControllerTest {
                 List.of(
                         CardTestUtils.createDefault(),
                         CardTestUtils.createAnother()));
+        when(currentUserProvider.id()).thenReturn(9432L);
+        when(currentUserProvider.admin()).thenReturn(false);
 
         // Act
         ResultActions actions = mockMvc.perform(

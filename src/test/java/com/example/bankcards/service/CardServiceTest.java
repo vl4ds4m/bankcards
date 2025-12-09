@@ -50,7 +50,7 @@ class CardServiceTest {
         var sut = new CardService(cardRepository, mock());
 
         // Act
-        sut.transfer(sender.getId(), receiver.getId(), amount);
+        sut.transfer(sender.getUser().getId(), sender.getId(), receiver.getId(), amount);
 
         // Assert
         verify(cardRepository).save(sender);
@@ -72,7 +72,7 @@ class CardServiceTest {
 
         // Act & Assert
         assertThrows(InvalidRequestException.class,
-                () -> sut.transfer(sender.getId(), receiver.getId(), amount));
+                () -> sut.transfer(sender.getUser().getId(), sender.getId(), receiver.getId(), amount));
     }
 
     private static void mockFind(CardRepository repository, long cardId, Card card) {

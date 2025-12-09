@@ -2,6 +2,7 @@ package com.example.bankcards.service;
 
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.AuthorizationException;
 import com.example.bankcards.exception.InvalidRequestException;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.UserRepository;
@@ -35,8 +36,9 @@ public class CardService {
         return card.getId();
     }
 
-    public long getCardBalance(long id) {
-        Card card = getCard(id);
+    public long getCardBalance(long userId, long cardId) {
+        Card card = getCard(cardId);
+        validateOwnership(userId, card);
         return card.getBalance();
     }
 
@@ -75,15 +77,17 @@ public class CardService {
     }
 
     @CardTransaction
-    public void transfer(long senderId, long receiverId, long amount) {
+    public void transfer(long userId, long senderId, long receiverId, long amount) {
         if (amount <= 0L) {
             throw new InvalidRequestException("Сумма перевода должна быть положительной.");
         }
 
         Card sender = getCard(senderId);
-        Card receiver = getCard(receiverId);
-
+        validateOwnership(userId, sender);
         validateCardActive(sender);
+
+        Card receiver = getCard(receiverId);
+        validateOwnership(userId, receiver);
         validateCardActive(receiver);
 
         long senderBalance = sender.getBalance() - amount;
@@ -106,6 +110,13 @@ public class CardService {
     private Card getCard(long id) {
         return cardRepository.findById(id).orElseThrow(() ->
                 new InvalidRequestException("Карта с id = " + id + " не существует"));
+    }
+
+    private static void validateOwnership(long userId, Card card) {
+        if (userId != card.getUser().getId()) {
+            throw new AuthorizationException(
+                    "Пользователь может выполнять операции только со своими картами.");
+        }
     }
 
     private static void validateCardActive(Card card) {

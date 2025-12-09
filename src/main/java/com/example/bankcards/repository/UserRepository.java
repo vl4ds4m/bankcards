@@ -3,4 +3,12 @@ package com.example.bankcards.repository;
 import com.example.bankcards.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends JpaRepository<User, Long> {}
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    boolean existsByLogin(String login);
+
+    Optional<User> findByLogin(String login);
+
+}
