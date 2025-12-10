@@ -1,7 +1,3 @@
-#Что нужно сделать:
-#  - Настроить параметры безопасности и JWT.
-#  - Включить Swagger UI.
-
 spring:
   application.name: bankcards
 
